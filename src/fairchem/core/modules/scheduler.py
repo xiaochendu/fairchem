@@ -38,7 +38,12 @@ class LRScheduler:
         if self.scheduler_type != "Null":
             self.scheduler = getattr(lr_scheduler, self.scheduler_type)
             scheduler_args = self.filter_kwargs(config)
-            self.scheduler = self.scheduler(optimizer, **scheduler_args)
+            if self.scheduler_type == "LambdaLR":
+                self.scheduler = self.scheduler(
+                    optimizer, lambda epoch: 0.95**epoch, **scheduler_args
+                )
+            else:
+                self.scheduler = self.scheduler(optimizer, **scheduler_args)
 
     def step(self, metrics=None, epoch=None) -> None:
         if self.scheduler_type == "Null":
@@ -59,7 +64,13 @@ class LRScheduler:
             if param.kind == param.POSITIONAL_OR_KEYWORD
         ]
         filter_keys.remove("optimizer")
-        return {arg: self.config[arg] for arg in self.config if arg in filter_keys}
+        scheduler_config = self.config.copy()
+        # Add the "scheduler_params" dict to the config
+        if "scheduler_params" in scheduler_config:
+            scheduler_config.update(scheduler_config.pop("scheduler_params"))
+        return {
+            arg: scheduler_config[arg] for arg in scheduler_config if arg in filter_keys
+        }
 
     def get_lr(self):
         for group in self.optimizer.param_groups:
