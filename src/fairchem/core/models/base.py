@@ -343,4 +343,7 @@ class HydraModel(nn.Module, GraphModelMixin):
                 else:
                     out[k] = self.output_heads[k](data, emb)
 
+        # Adapted from embedding_monkeypatch.py
+        out["embedding"] = emb["node_embedding"].embedding.detach()
+        out["invariant_embedding"] = out["embedding"][:, 0, :]
         return out
