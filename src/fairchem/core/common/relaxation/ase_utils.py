@@ -14,11 +14,11 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import ClassVar
+from typing import ClassVar, List
 
 import torch
 from ase import Atoms
-from ase.calculators.calculator import Calculator
+from ase.calculators.calculator import Calculator, all_changes
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.constraints import FixAtoms
 
@@ -225,7 +225,12 @@ class OCPCalculator(Calculator):
         except NotImplementedError:
             logging.warning("Unable to load checkpoint!")
 
-    def calculate(self, atoms: Atoms, properties, system_changes) -> None:
+    def calculate(
+        self,
+        atoms: Atoms,
+        properties: List[str] = ["energy", "forces"],
+        system_changes=all_changes,
+    ):
         Calculator.calculate(self, atoms, properties, system_changes)
         data_object = self.a2g.convert(atoms)
         batch = data_list_collater([data_object], otf_graph=True)
